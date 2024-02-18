@@ -30,7 +30,8 @@ defmodule TodoAppWeb.EntriesLive do
   end
 
   def mount(_params, _session, socket) do
-    entries = Entry.read_all!()
+    user_id = socket.assigns.current_user.id
+    entries = user_id |> Entry.get_by_author_id!()
 
     socket =
       assign(socket,
@@ -47,14 +48,17 @@ defmodule TodoAppWeb.EntriesLive do
 
   def handle_event("delete_entry", %{"entry-id" => entry_id}, socket) do
     entry_id |> Entry.get_by_id!() |> Entry.destroy!()
-    entries = Entry.read_all!()
+    user_id = socket.assigns.current_user.id
+    entries = user_id |> Entry.get_by_author_id!()
 
     {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
   end
 
   def handle_event("create_entry", %{"form" => %{"title" => title}}, socket) do
-    Entry.create(%{title: title})
-    entries = Entry.read_all!()
+    user_id = socket.assigns.current_user.id
+    Entry.create(%{title: title, author_id: user_id})
+
+    entries = user_id |> Entry.get_by_author_id!()
 
     {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
   end
@@ -63,7 +67,8 @@ defmodule TodoAppWeb.EntriesLive do
     %{"entry_id" => entry_id, "content" => content} = form_params
 
     entry_id |> Entry.get_by_id!() |> Entry.update!(%{content: content})
-    entries = Entry.read_all!()
+    user_id = socket.assigns.current_user.id
+    entries = user_id |> Entry.get_by_author_id!()
 
     {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
   end

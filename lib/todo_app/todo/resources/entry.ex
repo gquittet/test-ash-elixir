@@ -21,6 +21,7 @@ defmodule TodoApp.Todo.Entry do
     define :update, action: :update
     define :destroy, action: :destroy
     define :get_by_id, args: [:id], action: :by_id
+    define :get_by_author_id, args: [:author_id], action: :by_author_id
   end
 
   actions do
@@ -37,6 +38,11 @@ defmodule TodoApp.Todo.Entry do
       # against the `id` of each element in the resource
       filter expr(id == ^arg(:id))
     end
+
+    read :by_author_id do
+      argument :author_id, :uuid, allow_nil?: false
+      filter expr(author_id == ^arg(:author_id))
+    end
   end
 
   # Attributes are simple pieces of data that exist in your resource
@@ -52,5 +58,9 @@ defmodule TodoApp.Todo.Entry do
     # Add a string type attribute called `:content`
     # If allow_nil? is not specified, then content can be nil
     attribute :content, :string
+  end
+
+  relationships do
+    belongs_to :author, TodoApp.Accounts.User, attribute_writable?: true
   end
 end
