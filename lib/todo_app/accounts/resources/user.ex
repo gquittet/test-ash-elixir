@@ -15,7 +15,10 @@ defmodule TodoApp.Accounts.User do
     strategies do
       password :password do
         identity_field :email
-        sign_in_tokens_enabled? true
+
+        resettable do
+          sender TodoApp.Accounts.User.Senders.SendPasswordResetEmail
+        end
       end
     end
 
