@@ -41,6 +41,7 @@ defmodule TodoApp.Todo.Entry do
 
     read :by_author_id do
       argument :author_id, :uuid, allow_nil?: false
+      prepare build(sort: [created_at: :desc])
       filter expr(author_id == ^arg(:author_id))
     end
   end
@@ -67,5 +68,13 @@ defmodule TodoApp.Todo.Entry do
 
   relationships do
     belongs_to :author, TodoApp.Accounts.User, attribute_writable?: true
+  end
+
+  def toggle_deleted(entry) do
+    if entry.deleted_at == nil do
+      entry |> update(%{deleted_at: DateTime.utc_now()})
+    else
+      entry |> update(%{deleted_at: nil})
+    end
   end
 end
