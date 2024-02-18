@@ -58,6 +58,11 @@ defmodule TodoApp.Todo.Entry do
     # Add a string type attribute called `:content`
     # If allow_nil? is not specified, then content can be nil
     attribute :content, :string
+
+    create_timestamp :created_at
+    update_timestamp :updated_at
+
+    attribute :deleted_at, :utc_datetime_usec
   end
 
   relationships do
