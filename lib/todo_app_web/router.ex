@@ -1,5 +1,6 @@
 defmodule TodoAppWeb.Router do
   use TodoAppWeb, :router
+  use AshAuthentication.Phoenix.Router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -17,8 +18,17 @@ defmodule TodoAppWeb.Router do
   scope "/", TodoAppWeb do
     pipe_through :browser
 
+    sign_in_route(register_path: "/register", reset_path: "/reset")
+    sign_out_route AuthController
+    auth_routes_for TodoApp.Accounts.User, to: AuthController
+    reset_route []
+
     get "/", PageController, :home
-    live "/todo", EntriesLive
+
+    ash_authentication_live_session :authentication_required,
+      on_mount: {TodoAppWeb.LiveUserAuth, :live_user_required} do
+      live "/todo", EntriesLive
+    end
   end
 
   # Other scopes may use custom stacks.

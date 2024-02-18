@@ -8,7 +8,7 @@
 import Config
 
 config :todo_app,
-  ash_apis: [TodoApp.Todo],
+  ash_apis: [TodoApp.Todo, TodoApp.Accounts],
   ecto_repos: [TodoApp.Repo],
   generators: [timestamp_type: :utc_datetime]
 

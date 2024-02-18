@@ -53,7 +53,9 @@ defmodule TodoApp.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:ash, "~> 2.19"},
       {:ash_postgres, "~> 1.5"},
-      {:ash_phoenix, "~> 1.2"}
+      {:ash_phoenix, "~> 1.2"},
+      {:ash_authentication, "~> 3.12"},
+      {:ash_authentication_phoenix, "~> 1.9"}
     ]
   end
 
