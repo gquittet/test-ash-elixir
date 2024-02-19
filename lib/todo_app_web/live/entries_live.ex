@@ -52,7 +52,7 @@ defmodule TodoAppWeb.EntriesLive do
           AshPhoenix.Form.for_update(List.first(entries, %Entry{}), :update) |> to_form()
       )
 
-    {:ok, socket}
+    {:ok, socket, layout: {TodoAppWeb.Layouts, :app}}
   end
 
   def handle_event("delete_entry", %{"entry-id" => entry_id}, socket) do
