@@ -4,14 +4,14 @@ defmodule TodoAppWeb.EntriesLive do
 
   def render(assigns) do
     ~H"""
-    <h2>Todo's ✅</h2>
-    <.form :let={f} for={@create_form} phx-submit="create_entry" class="flex gap-4 items-center">
-      <.input type="text" field={f[:title]} placeholder="input title" />
+    <h2 class="text-2xl font-bold">Todo's ✅</h2>
+    <.form :let={f} for={@create_form} phx-submit="create_entry" class="flex gap-4 items-center py-4">
+      <.input type="text" field={f[:title]} placeholder="input title" class="w-full" />
       <.button type="submit">create</.button>
     </.form>
-    <div>
+    <div class="divide-y divide-neutral-300">
       <%= for entry <- @entries do %>
-        <div class="flex gap-4 items-center" id={"entry-#{entry.id}"}>
+        <div class="flex gap-4 py-2 items-center" id={"entry-#{entry.id}"}>
           <input
             type="checkbox"
             phx-click="mark_as_done"
@@ -28,7 +28,7 @@ defmodule TodoAppWeb.EntriesLive do
         </div>
       <% end %>
     </div>
-    <h2>Update todo</h2>
+    <h2 class="text-2xl font-bold mt-6">Update todo</h2>
     <.form :let={f} for={@update_form} phx-submit="update_entry">
       <.label>Todo Name</.label>
       <.input type="select" field={f[:entry_id]} options={@todo_selector} />
