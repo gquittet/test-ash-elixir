@@ -67,7 +67,11 @@ defmodule TodoApp.Todo.Entry do
   end
 
   relationships do
-    belongs_to :author, TodoApp.Accounts.User, attribute_writable?: true
+    belongs_to :author, TodoApp.Accounts.User do
+      api TodoApp.Accounts
+      attribute_writable? true
+      allow_nil? false
+    end
   end
 
   def toggle_deleted(entry) do

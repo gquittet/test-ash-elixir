@@ -6,7 +6,6 @@ defmodule TodoApp.Todo do
   end
 
   resources do
-    resource TodoApp.Accounts.User
     resource TodoApp.Todo.Entry
   end
 end
