@@ -9,6 +9,12 @@ defmodule TodoApp.Accounts.User do
     attribute :hashed_password, :string, allow_nil?: false, sensitive?: true
   end
 
+  actions do
+    read :read do
+      primary? true
+    end
+  end
+
   authentication do
     api TodoApp.Accounts
 

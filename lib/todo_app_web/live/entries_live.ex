@@ -39,8 +39,7 @@ defmodule TodoAppWeb.EntriesLive do
   end
 
   def mount(_params, _session, socket) do
-    user_id = socket.assigns.current_user.id
-    entries = user_id |> Entry.get_by_author_id!()
+    entries = Entry.read_all!(actor: socket.assigns.current_user)
 
     socket =
       assign(socket,
@@ -56,18 +55,18 @@ defmodule TodoAppWeb.EntriesLive do
   end
 
   def handle_event("delete_entry", %{"entry-id" => entry_id}, socket) do
-    entry_id |> Entry.get_by_id!() |> Entry.destroy!()
-    user_id = socket.assigns.current_user.id
-    entries = user_id |> Entry.get_by_author_id!()
+    user = socket.assigns.current_user
+    entry_id |> Entry.get_by_id!(actor: user) |> Entry.destroy!()
+    entries = Entry.read_all!(actor: user)
 
     {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
   end
 
   def handle_event("create_entry", %{"form" => %{"title" => title}}, socket) do
-    user_id = socket.assigns.current_user.id
-    Entry.create(%{title: title |> String.trim(), author_id: user_id})
+    user = socket.assigns.current_user
+    Entry.create(%{title: title |> String.trim()}, actor: user)
 
-    entries = user_id |> Entry.get_by_author_id!()
+    entries = Entry.read_all!(actor: user)
 
     {:noreply,
      assign(socket,
@@ -78,10 +77,10 @@ defmodule TodoAppWeb.EntriesLive do
   end
 
   def handle_event("mark_as_done", %{"entry-id" => entry_id}, socket) do
-    Entry.get_by_id!(entry_id) |> Entry.toggle_deleted()
+    user = socket.assigns.current_user
+    entry_id |> Entry.get_by_id!(actor: user) |> Entry.toggle_deleted()
 
-    user_id = socket.assigns.current_user.id
-    entries = user_id |> Entry.get_by_author_id!()
+    entries = Entry.read_all!(actor: user)
 
     {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
   end
@@ -89,9 +88,9 @@ defmodule TodoAppWeb.EntriesLive do
   def handle_event("update_entry", %{"form" => form_params}, socket) do
     %{"entry_id" => entry_id, "content" => content} = form_params
 
-    entry_id |> Entry.get_by_id!() |> Entry.update!(%{content: content})
-    user_id = socket.assigns.current_user.id
-    entries = user_id |> Entry.get_by_author_id!()
+    user = socket.assigns.current_user
+    entry_id |> Entry.get_by_id!(actor: user) |> Entry.update!(%{content: content})
+    entries = Entry.read_all!(actor: user)
 
     {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
   end

@@ -21,12 +21,20 @@ defmodule TodoApp.Todo.Entry do
     define :update, action: :update
     define :destroy, action: :destroy
     define :get_by_id, args: [:id], action: :by_id
-    define :get_by_author_id, args: [:author_id], action: :by_author_id
   end
 
   actions do
     # Exposes default built in actions to manage the resource
-    defaults [:create, :read, :update, :destroy]
+    defaults [:update, :destroy]
+
+    create :create do
+      change relate_actor(:author)
+    end
+
+    read :read do
+      prepare build(sort: [created_at: :desc])
+      filter expr(author_id == ^actor(:id))
+    end
 
     # Defines custom read action which fetches post by id.
     read :by_id do
@@ -36,13 +44,7 @@ defmodule TodoApp.Todo.Entry do
       get? true
       # Filters the `:id` given in the argument
       # against the `id` of each element in the resource
-      filter expr(id == ^arg(:id))
-    end
-
-    read :by_author_id do
-      argument :author_id, :uuid, allow_nil?: false
-      prepare build(sort: [created_at: :desc])
-      filter expr(author_id == ^arg(:author_id))
+      filter expr(id == ^arg(:id) and author_id == ^actor(:id))
     end
   end
 
@@ -69,7 +71,6 @@ defmodule TodoApp.Todo.Entry do
   relationships do
     belongs_to :author, TodoApp.Accounts.User do
       api TodoApp.Accounts
-      attribute_writable? true
       allow_nil? false
     end
   end
