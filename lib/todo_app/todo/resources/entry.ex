@@ -21,6 +21,8 @@ defmodule TodoApp.Todo.Entry do
     define :update, action: :update
     define :destroy, action: :destroy
     define :get_by_id, args: [:id], action: :by_id
+    define :done, action: :done
+    define :restore, action: :restore
   end
 
   actions do
@@ -45,6 +47,14 @@ defmodule TodoApp.Todo.Entry do
       # Filters the `:id` given in the argument
       # against the `id` of each element in the resource
       filter expr(id == ^arg(:id) and author_id == ^actor(:id))
+    end
+
+    update :done do
+      change set_attribute(:deleted_at, &DateTime.utc_now/0)
+    end
+
+    update :restore do
+      change set_attribute(:deleted_at, nil)
     end
   end
 
@@ -72,14 +82,6 @@ defmodule TodoApp.Todo.Entry do
     belongs_to :author, TodoApp.Accounts.User do
       api TodoApp.Accounts
       allow_nil? false
-    end
-  end
-
-  def toggle_deleted(entry) do
-    if entry.deleted_at == nil do
-      entry |> update(%{deleted_at: DateTime.utc_now()})
-    else
-      entry |> update(%{deleted_at: nil})
     end
   end
 end

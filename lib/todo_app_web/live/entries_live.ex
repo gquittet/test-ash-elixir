@@ -12,16 +12,28 @@ defmodule TodoAppWeb.EntriesLive do
     <div class="divide-y divide-neutral-300">
       <%= for entry <- @entries do %>
         <div class="flex gap-4 py-2 items-center" id={"entry-#{entry.id}"}>
-          <input
-            type="checkbox"
-            phx-click="mark_as_done"
-            phx-value-entry-id={entry.id}
-            class="cursor-pointer"
-            checked={Map.get(entry, :deleted_at)}
-          />
-          <div class={if Map.get(entry, :deleted_at), do: "line-through italic"}>
-            <%= entry.title %>
-          </div>
+          <%= if Map.get(entry, :deleted_at) do %>
+            <div class="line-through italic">
+              <input
+                type="checkbox"
+                phx-click="restore"
+                phx-value-entry-id={entry.id}
+                class="cursor-pointer"
+                checked
+              />
+              <%= entry.title %>
+            </div>
+          <% else %>
+            <div>
+              <input
+                type="checkbox"
+                phx-click="done"
+                phx-value-entry-id={entry.id}
+                class="cursor-pointer"
+              />
+              <%= entry.title %>
+            </div>
+          <% end %>
           <button phx-click="delete_entry" phx-value-entry-id={entry.id}>
             <.icon name="hero-trash" />
           </button>
@@ -76,9 +88,18 @@ defmodule TodoAppWeb.EntriesLive do
      )}
   end
 
-  def handle_event("mark_as_done", %{"entry-id" => entry_id}, socket) do
+  def handle_event("done", %{"entry-id" => entry_id}, socket) do
     user = socket.assigns.current_user
-    entry_id |> Entry.get_by_id!(actor: user) |> Entry.toggle_deleted()
+    entry_id |> Entry.get_by_id!(actor: user) |> Entry.done!()
+
+    entries = Entry.read_all!(actor: user)
+
+    {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
+  end
+
+  def handle_event("restore", %{"entry-id" => entry_id}, socket) do
+    user = socket.assigns.current_user
+    entry_id |> Entry.get_by_id!(actor: user) |> Entry.restore!()
 
     entries = Entry.read_all!(actor: user)
 
