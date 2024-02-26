@@ -34,7 +34,7 @@ defmodule TodoApp.Todo.Entry do
     end
 
     read :read do
-      prepare build(sort: [created_at: :desc])
+      prepare build(sort: [created_at: :desc], load: [:done?])
       filter expr(author_id == ^actor(:id))
     end
 
@@ -83,5 +83,9 @@ defmodule TodoApp.Todo.Entry do
       api TodoApp.Accounts
       allow_nil? false
     end
+  end
+
+  calculations do
+    calculate :done?, :boolean, expr(not is_nil(deleted_at))
   end
 end

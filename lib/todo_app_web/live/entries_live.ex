@@ -12,25 +12,25 @@ defmodule TodoAppWeb.EntriesLive do
     <div class="divide-y divide-neutral-300">
       <%= for entry <- @entries do %>
         <div class="flex gap-4 py-2 items-center" id={"entry-#{entry.id}"}>
-          <%= if Map.get(entry, :deleted_at) do %>
+          <%= if entry.done? do %>
+            <input
+              type="checkbox"
+              phx-click="restore"
+              phx-value-entry-id={entry.id}
+              class="cursor-pointer"
+              checked
+            />
             <div class="line-through italic">
-              <input
-                type="checkbox"
-                phx-click="restore"
-                phx-value-entry-id={entry.id}
-                class="cursor-pointer"
-                checked
-              />
               <%= entry.title %>
             </div>
           <% else %>
+            <input
+              type="checkbox"
+              phx-click="done"
+              phx-value-entry-id={entry.id}
+              class="cursor-pointer"
+            />
             <div>
-              <input
-                type="checkbox"
-                phx-click="done"
-                phx-value-entry-id={entry.id}
-                class="cursor-pointer"
-              />
               <%= entry.title %>
             </div>
           <% end %>
