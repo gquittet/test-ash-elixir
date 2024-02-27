@@ -2,7 +2,18 @@ defmodule TodoApp.Todo.Entry do
   # Using Ash.Resource turns this module into an Ash resource.
   use Ash.Resource,
     # Tells Ash you want this resource to store its data in Postgres.
-    data_layer: AshPostgres.DataLayer
+    data_layer: AshPostgres.DataLayer,
+    notifiers: [Ash.Notifier.PubSub]
+
+  pub_sub do
+    module TodoAppWeb.Endpoint
+    prefix "entries"
+
+    publish :done, ["done", :id]
+    publish :restore, ["restore", :id]
+    publish :create, ["created"]
+    publish :destroy, ["deleted", :id]
+  end
 
   # The Postgres keyword is specific to the AshPostgres module.
   postgres do

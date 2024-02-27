@@ -53,6 +53,9 @@ defmodule TodoAppWeb.EntriesLive do
   def mount(_params, _session, socket) do
     entries = Entry.read_all!(actor: socket.assigns.current_user)
 
+    TodoAppWeb.Endpoint.subscribe("entries:created")
+    entries |> Enum.map(fn entry -> subscribe(entry.id) end)
+
     socket =
       assign(socket,
         entries: entries,
@@ -66,9 +69,22 @@ defmodule TodoAppWeb.EntriesLive do
     {:ok, socket, layout: {TodoAppWeb.Layouts, :app}}
   end
 
+  defp subscribe(entry_id) do
+    TodoAppWeb.Endpoint.subscribe("entries:done:#{entry_id}")
+    TodoAppWeb.Endpoint.subscribe("entries:restore:#{entry_id}")
+    TodoAppWeb.Endpoint.subscribe("entries:deleted:#{entry_id}")
+  end
+
+  defp unsubscribe(entry_id) do
+    TodoAppWeb.Endpoint.unsubscribe("entries:done:#{entry_id}")
+    TodoAppWeb.Endpoint.unsubscribe("entries:restore:#{entry_id}")
+    TodoAppWeb.Endpoint.unsubscribe("entries:deleted:#{entry_id}")
+  end
+
   def handle_event("delete_entry", %{"entry-id" => entry_id}, socket) do
     user = socket.assigns.current_user
     entry_id |> Entry.get_by_id!(actor: user) |> Entry.destroy!()
+    unsubscribe(entry_id)
     entries = Entry.read_all!(actor: user)
 
     {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
@@ -76,8 +92,8 @@ defmodule TodoAppWeb.EntriesLive do
 
   def handle_event("create_entry", %{"form" => %{"title" => title}}, socket) do
     user = socket.assigns.current_user
-    Entry.create(%{title: title |> String.trim()}, actor: user)
-
+    {:ok, entry} = Entry.create(%{title: title |> String.trim()}, actor: user)
+    subscribe(entry.id)
     entries = Entry.read_all!(actor: user)
 
     {:noreply,
@@ -113,6 +129,28 @@ defmodule TodoAppWeb.EntriesLive do
     entry_id |> Entry.get_by_id!(actor: user) |> Entry.update!(%{content: content})
     entries = Entry.read_all!(actor: user)
 
+    {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
+  end
+
+  def handle_info(%{topic: "entries:created", payload: %{data: entry}}, socket) do
+    subscribe(entry.id)
+    entries = Entry.read_all!(actor: socket.assigns.current_user)
+    {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
+  end
+
+  def handle_info(%{topic: "entries:done:" <> _}, socket) do
+    entries = Entry.read_all!(actor: socket.assigns.current_user)
+    {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
+  end
+
+  def handle_info(%{topic: "entries:restore:" <> _}, socket) do
+    entries = Entry.read_all!(actor: socket.assigns.current_user)
+    {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
+  end
+
+  def handle_info(%{topic: "entries:deleted:" <> id}, socket) do
+    unsubscribe(id)
+    entries = Entry.read_all!(actor: socket.assigns.current_user)
     {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
   end
 
