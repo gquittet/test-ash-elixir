@@ -77,6 +77,11 @@ defmodule TodoApp.Todo.Entry do
     attribute :title, :string do
       # We don't want the title to ever be `nil`
       allow_nil? false
+
+      constraints min_length: 1,
+                  max_length: 255,
+                  trim?: true,
+                  allow_empty?: false
     end
 
     # Add a string type attribute called `:content`

@@ -5,7 +5,13 @@ defmodule TodoAppWeb.EntriesLive do
   def render(assigns) do
     ~H"""
     <h2 class="text-2xl font-bold">Todo's ✅</h2>
-    <.form :let={f} for={@create_form} phx-submit="create_entry" class="flex gap-4 items-center py-4">
+    <.form
+      :let={f}
+      for={@create_form}
+      phx-submit="create_entry"
+      phx-change="validate"
+      class="flex gap-4 items-start py-4"
+    >
       <.input type="text" field={f[:title]} placeholder="input title" class="w-full" />
       <.button type="submit">create</.button>
     </.form>
@@ -61,12 +67,27 @@ defmodule TodoAppWeb.EntriesLive do
         entries: entries,
         todo_selector: todo_selector(entries),
         # the `to_form/1` calls below are for liveview 0.18.12+. For earlier versions, remove those calls
-        create_form: AshPhoenix.Form.for_create(Entry, :create) |> to_form(),
-        update_form:
-          AshPhoenix.Form.for_update(List.first(entries, %Entry{}), :update) |> to_form()
+        create_form: socket |> init_create_form,
+        update_form: socket |> init_update_form(entries)
       )
 
     {:ok, socket, layout: {TodoAppWeb.Layouts, :app}}
+  end
+
+  defp init_create_form(socket) do
+    AshPhoenix.Form.for_create(Entry, :create,
+      api: TodoApp.Todo,
+      actor: socket.assigns.current_user
+    )
+    |> to_form()
+  end
+
+  defp init_update_form(socket, entries) do
+    AshPhoenix.Form.for_update(List.first(entries, %Entry{}), :update,
+      api: TodoApp.Todo,
+      actor: socket.assigns.current_user
+    )
+    |> to_form()
   end
 
   defp subscribe(entry_id) do
@@ -81,6 +102,11 @@ defmodule TodoAppWeb.EntriesLive do
     TodoAppWeb.Endpoint.unsubscribe("entries:deleted:#{entry_id}")
   end
 
+  def handle_event("validate", %{"form" => params}, socket) do
+    form = AshPhoenix.Form.validate(socket.assigns.create_form, params)
+    {:noreply, assign(socket, create_form: form)}
+  end
+
   def handle_event("delete_entry", %{"entry-id" => entry_id}, socket) do
     user = socket.assigns.current_user
     entry_id |> Entry.get_by_id!(actor: user) |> Entry.destroy!()
@@ -90,18 +116,23 @@ defmodule TodoAppWeb.EntriesLive do
     {:noreply, assign(socket, entries: entries, todo_selector: todo_selector(entries))}
   end
 
-  def handle_event("create_entry", %{"form" => %{"title" => title}}, socket) do
-    user = socket.assigns.current_user
-    {:ok, entry} = Entry.create(%{title: title |> String.trim()}, actor: user)
-    subscribe(entry.id)
-    entries = Entry.read_all!(actor: user)
+  def handle_event("create_entry", %{"form" => params}, socket) do
+    case AshPhoenix.Form.submit(socket.assigns.create_form, params: params) do
+      {:ok, entry} ->
+        user = socket.assigns.current_user
+        subscribe(entry.id)
+        entries = Entry.read_all!(actor: user)
 
-    {:noreply,
-     assign(socket,
-       create_form: AshPhoenix.Form.for_create(Entry, :create) |> to_form(),
-       entries: entries,
-       todo_selector: todo_selector(entries)
-     )}
+        {:noreply,
+         assign(socket,
+           create_form: socket |> init_create_form,
+           entries: entries,
+           todo_selector: todo_selector(entries)
+         )}
+
+      {:error, form} ->
+        {:noreply, assign(socket, create_form: form)}
+    end
   end
 
   def handle_event("done", %{"entry-id" => entry_id}, socket) do
